@@ -9,19 +9,68 @@ void setup()
   pinMode(buzzer,OUTPUT);//设置数字IO脚模式，OUTPUT为输出
   pinMode(eye1,OUTPUT);
   pinMode(eye2,OUTPUT);
+  
+  Sch.init(); // 初始化调度器
+  
+  // 添加任务
+  Sch.addTask(s_emoeye,0,1,0); // 1ms 执行一次，抢占式
+  Sch.addTask(s_emosay,0,2000,1); // 2000ms 执行一次
+  
+  Sch.start(); // 启动调度器
 }
 
 void loop()
 {
-  emosay(buzzer,1);
-  emoeye(1);
-  delay(2500);
+  Sch.dispatchTasks();
+//  emosay(buzzer,9);
+//  emoeye(1);
+//  delay(2500);
 //  for(int i=1; i<10; i++)
 //  {
 //   emosay(buzzer,i);
 //   delay(1500);
 //  }
 }
+
+
+/////////////////////////////////////////
+// Tasks to be scheduled
+// 被调度的子程序不能有参数，所以另写一个
+void s_emosay()
+{
+  emosay(buzzer, 1);
+}
+
+void s_emoeye()
+{
+  static unsigned int eyeCounter;
+  if(eyeCounter <= 255)
+  {
+    emoeyeout(eyeCounter);
+  }
+  else
+  {
+    if(256 == eyeCounter)
+    {
+      emoeyeout(0);
+    }
+    else if(300 == eyeCounter)
+    {
+      emoeyeout(255);
+    }
+    else if(400 == eyeCounter)
+    {
+      emoeyeout(0);
+    }
+    else if(1000 <= eyeCounter)
+    {
+      eyeCounter = 0;
+    }
+  }
+  eyeCounter++;
+}
+/////////////////////////////////////////
+
 
 void emoeye(char var){
   switch (var){

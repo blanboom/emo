@@ -19,25 +19,25 @@ Task g_Tasks[MAX_TASKS];  // Tasks array
 //////////////////////////////////////////////////////////////////
 void Schedule::init(void) 
 {
-	// Delete all tasks in the task array
-	uint8_t i;
-	for (i = 0; i < MAX_TASKS; i++) 
-	{
-		deleteTask(i);
-	}
+  // Delete all tasks in the task array
+  uint8_t i;
+  for (i = 0; i < MAX_TASKS; i++) 
+  {
+    deleteTask(i);
+  }
 
-	// Reset error code
-	g_errorCode = 0;  
+  // Reset error code
+  g_errorCode = 0;  
 
-	//Set up timer1. 1ms per interrupt
-	cli(); //disable global interrupt
-	TCCR1A = 0;
-	TCCR1B = 0;
-	TCNT1  = 0;
-	OCR1A = 1999;
-	TCCR1B |= (1 << WGM12);
-	TCCR1B |= (1 << CS11);  
-	TIMSK1 |= (1 << OCIE1A);
+  //Set up timer1. 1ms per interrupt
+  cli(); //disable global interrupt
+  TCCR1A = 0;
+  TCCR1B = 0;
+  TCNT1  = 0;
+  OCR1A = 1999;
+  TCCR1B |= (1 << WGM12);
+  TCCR1B |= (1 << CS11);  
+  TIMSK1 |= (1 << OCIE1A);
 }
 
 //////////////////////////////////////////////////////////////////
@@ -46,7 +46,7 @@ void Schedule::init(void)
 //////////////////////////////////////////////////////////////////
 void Schedule::start(void) 
 {
-	sei();  //enable global interrupt
+  sei();  //enable global interrupt
 }
 
 /////////////////////////////////////////////////////////////////
@@ -64,32 +64,32 @@ void Schedule::start(void)
 //////////////////////////////////////////////////////////////////
 unsigned char Schedule::addTask(void (*pFn)(), uint16_t del, uint16_t per, boolean co_op)  
 {
-	uint8_t index = 0;
+  uint8_t index = 0;
 
-	// Find a gap in the array
-	while ((g_Tasks[index].pTask != 0) && (index < MAX_TASKS))
-	{
-		index++;
-	} 
+  // Find a gap in the array
+  while ((g_Tasks[index].pTask != 0) && (index < MAX_TASKS))
+  {
+    index++;
+  } 
 
-	if (index == MAX_TASKS)
-	{
-		// The task array is full.Can't add more tasks
-		g_errorCode = ERROR_TOO_MANY_TASKS;
-		return MAX_TASKS; 
-	}
+  if (index == MAX_TASKS)
+  {
+    // The task array is full.Can't add more tasks
+    g_errorCode = ERROR_TOO_MANY_TASKS;
+    return MAX_TASKS; 
+  }
 
-	// Put the task into task array
-	g_Tasks[index].pTask = pFn;
+  // Put the task into task array
+  g_Tasks[index].pTask = pFn;
 
-	g_Tasks[index].delay  = del;
-	g_Tasks[index].period = per;
+  g_Tasks[index].delay  = del;
+  g_Tasks[index].period = per;
 
-	g_Tasks[index].co_op = co_op;
+  g_Tasks[index].co_op = co_op;
 
-	g_Tasks[index].runMe  = 0;
+  g_Tasks[index].runMe  = 0;
 
-	return index; // Return task ID
+  return index; // Return task ID
 }
 
 /////////////////////////////////////////////////////////////////
@@ -104,26 +104,26 @@ unsigned char Schedule::addTask(void (*pFn)(), uint16_t del, uint16_t per, boole
 //////////////////////////////////////////////////////////////////
 boolean Schedule::deleteTask(uint8_t taskIndex) 
 {
-	boolean returnCode;
+  boolean returnCode;
 
-	if (g_Tasks[taskIndex].pTask == 0)
-	{
-		// There is no task
-		g_errorCode = ERROR_CANNOT_DELETE_TASK;
-		returnCode = RETURN_ERROR;  // Return an error code 
-	}
-	else
-	{
-		returnCode = RETURN_NORMAL;
-	}      
+  if (g_Tasks[taskIndex].pTask == 0)
+  {
+    // There is no task
+    g_errorCode = ERROR_CANNOT_DELETE_TASK;
+    returnCode = RETURN_ERROR;  // Return an error code 
+  }
+  else
+  {
+    returnCode = RETURN_NORMAL;
+  }      
 
-	g_Tasks[taskIndex].pTask   = 0;
-	g_Tasks[taskIndex].delay   = 0;
-	g_Tasks[taskIndex].period  = 0;
+  g_Tasks[taskIndex].pTask   = 0;
+  g_Tasks[taskIndex].delay   = 0;
+  g_Tasks[taskIndex].period  = 0;
 
-	g_Tasks[taskIndex].runMe   = 0;
+  g_Tasks[taskIndex].runMe   = 0;
 
-	return returnCode;       // return status
+  return returnCode;       // return status
 }
 
 /////////////////////////////////////////////////////////////////
@@ -132,25 +132,25 @@ boolean Schedule::deleteTask(uint8_t taskIndex)
 /////////////////////////////////////////////////////////////////
 void Schedule::dispatchTasks(void) 
 {
-	uint8_t index;
-	for (index = 0; index < MAX_TASKS; index++)
-	{
-		// Run co-operative tasks only
-		if ((g_Tasks[index].co_op) && (g_Tasks[index].runMe > 0)) 
-		{
-			(*g_Tasks[index].pTask)();  // Run the task
+  uint8_t index;
+  for (index = 0; index < MAX_TASKS; index++)
+  {
+    // Run co-operative tasks only
+    if ((g_Tasks[index].co_op) && (g_Tasks[index].runMe > 0)) 
+    {
+      (*g_Tasks[index].pTask)();  // Run the task
 
-			g_Tasks[index].runMe -= 1;   
+        g_Tasks[index].runMe = 0;   
 
-			// If period = 0, this task will only run once
-			if (g_Tasks[index].period == 0)
-			{
-				g_Tasks[index].pTask = 0;  // Delete the task
-			}
-		}
-	}
-	_reportStatus();  // Report errors (if necessary)
-	_goToSleep();  // Go to sleep (idle) mode
+      // If period = 0, this task will only run once
+      if (g_Tasks[index].period == 0)
+      {
+        g_Tasks[index].pTask = 0;  // Delete the task
+      }
+    }
+  }
+  _reportStatus();  // Report errors (if necessary)
+  _goToSleep();  // Go to sleep (idle) mode
 }
 
 //////////////////////////////////////////////////////////////////
@@ -161,7 +161,7 @@ void Schedule::dispatchTasks(void)
 void Schedule::_reportStatus(void)
 {
 #ifdef REPORT_ERRORS
-	// Put you codes to report errors
+  // Put you codes to report errors
 #endif
 }
 
@@ -172,9 +172,9 @@ void Schedule::_reportStatus(void)
 //////////////////////////////////////////////////////////////////
 void Schedule::_goToSleep()
 {
-	set_sleep_mode(SLEEP_MODE_IDLE);
-	sleep_enable();   
-	sleep_mode();
+  set_sleep_mode(SLEEP_MODE_IDLE);
+  sleep_enable();   
+  sleep_mode();
 }
 
 //////////////////////////////////////////////////////////////////
@@ -183,44 +183,45 @@ void Schedule::_goToSleep()
 //////////////////////////////////////////////////////////////////
 ISR (TIMER1_COMPA_vect)
 {
-	uint8_t index;  
-	for (index = 0; index < MAX_TASKS; index++)
-	{
-		// Check if there is a task
-		if (g_Tasks[index].pTask)
-		{
-			if (g_Tasks[index].delay == 0)
-			{
-				if (g_Tasks[index].co_op)
-				{
-					// A co-operative task
-					g_Tasks[index].runMe += 1;  
-				}
-				else
-				{
-					// A pre-emptive task 
-					(*g_Tasks[index].pTask)();  // Run the task now
+  uint8_t index;  
+  for (index = 0; index < MAX_TASKS; index++)
+  {
+    // Check if there is a task
+    if (g_Tasks[index].pTask)
+    {
+      if (g_Tasks[index].delay == 0)
+      {
+        if (g_Tasks[index].co_op)
+        {
+          // A co-operative task
+          g_Tasks[index].runMe = 1;  
+        }
+        else
+        {
+          // A pre-emptive task 
+          (*g_Tasks[index].pTask)();  // Run the task now
 
-					g_Tasks[index].runMe -= 1;   
+          g_Tasks[index].runMe = 0;   
 
-					// Remove the task that the period = 0
-					if (g_Tasks[index].period == 0)
-					{
-						g_Tasks[index].pTask  = 0;
-					}
-				}
+          // Remove the task that the period = 0
+          if (g_Tasks[index].period == 0)
+          {
+            g_Tasks[index].pTask  = 0;
+          }
+        }
 
-				if (g_Tasks[index].period)
-				{
-					// Schedule the task to run again
-					g_Tasks[index].delay = g_Tasks[index].period;
-				}
-			}
-			else
-			{
-				// Decrease the delay
-				g_Tasks[index].delay -= 1;
-			}
-		}         
-	}
+        if (g_Tasks[index].period)
+        {
+          // Schedule the task to run again
+          g_Tasks[index].delay = g_Tasks[index].period;
+        }
+      }
+      else
+      {
+        // Decrease the delay
+        g_Tasks[index].delay -= 1;
+      }
+    }         
+  }
 }   
+
